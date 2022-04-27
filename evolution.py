@@ -38,7 +38,7 @@ def drive_pulse(t, args):      # 製作高斯脈衝
 # 設定高斯脈衝的參數 plot 1
 args1 = {}
 t_pulse = 30
-amp = 0.238
+amp = 0.3
 args1['gate time'] = t_pulse
 args1['amp'] = amp
 args1['drive frequency'] = w_q
@@ -80,8 +80,7 @@ result_population = []  # 紀錄結果的集合
 ini = ground
 
 # 設定高斯脈衝的參數 plot 2
-t_pulse = 30
-amp_range = np.linspace(0, 0.5*np.pi, 100)  # 脈衝強度範圍
+amp_range = np.linspace(0, 10*np.pi, 100)  # 脈衝強度範圍
 t_list1 = np.linspace(0, t_pulse, 100)
 args2 = {}
 args2['gate time'] = t_pulse

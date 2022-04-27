@@ -43,7 +43,7 @@ H = [H_0, H_d]
 # 設定高斯脈衝的參數 plot 1
 args1 = {}
 t_pulse = 30
-amps = 35
+amps = 0.238
 steps = 10000
 t_g = t_pulse
 tau = t_g/2.0
@@ -59,20 +59,21 @@ plt.plot(t_list, drive_pulse(t_list, args1))
 plt.title('Gaussian Pulse')
 plt.ylabel('Amplitude')
 plt.xlabel('Time')
-# plt.show()
+plt.show()
 
 c = 0
 for x in t_list:
-    c = c+amps*np.exp(-(x-tau)**2/(sigma**2)) * amps * \
-        np.exp(-(x-tau)**2/(sigma**2)) * t_pulse/steps
-    # c == pulse's energy
+    c = c+amps*np.exp(-(x-tau)**2/(sigma**2))*30/50000
+    # 2* c == pulse's energy
+print('pulse energy = ', 2*c)
+print('transition frequency = ', 2*c/2/np.pi)
 
 n = c/wa  # number of photon
-rabi_freq = sqrt(4*(n+1)*alpha**2+(w_q-wa)**2)
+rabi_freq = sqrt(4*(n+1)*alpha**2+(w_q-wa)**2)-25.41129101679815964
 
-print('c=', c)
+
 print('n=', n)
-print('amp=', amps, 'rabi freq=', rabi_freq/69.37385873)
+print('amp=', amps, 'rabi freq=', rabi_freq/3.03)
 
 
 result = mesolve(H, ini, t_list, [], args=args1)
@@ -90,4 +91,4 @@ plt.title('Population Evolution')
 plt.xlabel('Time')
 plt.ylabel('Population')
 plt.legend(loc='right')
-# plt.show()
+plt.show()
