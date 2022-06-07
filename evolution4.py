@@ -20,89 +20,94 @@ ground = basis(Nstates, 0)
 excited = basis(Nstates, 1)
 # theroitical k   atom-field coupling constant
 k = 1.6*0.4*np.sqrt(50)/h_*(Ej/2/Ec)**0.25*10000
-#t_pulse = 2.63
+t_pulse = 2.63
 
 alpha = -300*0.001*2*np.pi
-H_0 = w_q*a*a.dag()+alpha*a*a*a.dag()*a.dag()/2  # Hamiltonaian from Qiskit
+H_0 = w_q*a*a.dag()+alpha*a*a*a.dag()*a.dag()/2   # Hamiltonaian
 
 
-def drive_pulse(t, args):      # 製作高斯脈衝
-    t_g = args['gate time']  # pulse time
-    amp = args['amp']
+def step_func(t):
+    return (-1*np.tanh(1000*(t-t_pulse))+1)/2
+
+
+def exp_pulse(t, args):
+    t0 = args['gate time']  # pulse time
     w_d = args['drive frequency']
-    tau = 15
-    sigma = 4/2.355
+    V = args['amp']
+    tau = args['characteristic time']
 
-    return amp*np.exp(-(t-tau)**2/2*(sigma**2)) * np.cos(w_d * t)
+    return V*np.exp((t-t0)/tau) * (np.cos(w_d * t))*step_func(t)
 
 
-# 設定高斯脈衝的參數 plot 1
-args1 = {}
+H_d = [a+a.dag(), exp_pulse]
+H = [H_0, H_d]
+ini = ground
+
+
+# 設定脈衝的參數
+# exp_pulse 參數
+args3 = {}
 t_pulse = 30
-amp = 8
-tau = 15
-sigma = 4/2.355
-args1['gate time'] = t_pulse
-args1['amp'] = amp
-args1['drive frequency'] = w_q
-t_list = np.linspace(0, t_pulse, 10000)
-
-
-plt.plot(t_list, drive_pulse(t_list, args1))
-plt.title('Gaussian Pulse')
+V = 2.12
+tau = 1.4
+t0 = t_pulse
+args3['gate time'] = t_pulse
+args3['amp'] = V
+args3['drive frequency'] = w_q
+args3['characteristic time'] = tau
+### N = 0.09
+# 繪圖
+t_list = np.linspace(0, 2*t_pulse, 10000)
+plt.plot(t_list,  exp_pulse(t_list, args3))
+plt.title('Exponential Pulse')
 plt.ylabel('Amplitude')
 plt.xlabel('Time')
 plt.show()
 
-H_d = [a+a.dag(), drive_pulse]
-H = [H_0, H_d]
-ini = ground
-result = mesolve(H, ini, t_list, [], args=args1)
+result = mesolve(H, ini, t_list, [], args=args3)
+
 # 觀測量 plot 1
 state0 = ground*ground.dag()
 state1 = excited*excited.dag()
 result0 = expect(state0, result.states)
 result1 = expect(state1, result.states)
+#################
+c = 0
+t = np.linspace(0, t_pulse, 1000)
+for i in t:
+    c = c + (V*np.exp((i-t0)/tau))**2*t_pulse/1000  # * (np.cos(w_q * i))
 
-
+N = c/w_q/h_/10  # 光子數
+print('c = ', c)
+print('N=', N)
+######################
 # Plot 1
 plt.plot(t_list, result0, label='Ground')
 plt.plot(t_list, result1, label='Excited')
-plt.title('Population Evolution (Gaussian)')
+plt.title('Population Evolution (Exponential)')
 plt.xlabel('Time')
 plt.ylabel('Population')
-plt.legend(loc='lower right')
+plt.legend(loc='right')
 plt.show()
 
-t = np.linspace(0, t_pulse, 1000)
-k = 0
-c = 0
 
-for i in t:
-    c = c + (amp*np.exp(-(i-tau)**2/2*(sigma**2)))**2*t_pulse/1000
-N = c/w_q/h_/10  # 光子數
-print('N=', N)
-print('c = ', c)
-
-# Plot 2
-# 針對不同的脈衝強度做計算
-
+# 設定脈衝的參數 plot 2
 result_population = []  # 紀錄結果的集合
 ini = ground
 
-# 設定高斯脈衝的參數 plot 2
-amp_range = np.linspace(0, 2*amp, 100)  # 脈衝強度範圍
-t_list1 = np.linspace(0, 2*t_pulse, 100)
+amp_range = np.linspace(0, 2*V, 100)  # 脈衝強度範圍
+t_list1 = np.linspace(0, t_pulse, 100)
 args2 = {}
 args2['gate time'] = t_pulse
+args2['amp'] = V
 args2['drive frequency'] = w_q
-
+args2['characteristic time'] = tau
 state2 = excited*excited.dag()
 for item in amp_range:
     args2['amp'] = item
     result = mesolve(H, ini, t_list1, [], args=args2)
     result_population.append(expect(state2, result.states[-1]))
-    if expect(state2, result.states[-1]) > 0.999:
+    if expect(state2, result.states[-1]) > 0.99:
         print(item)
 
 
@@ -113,10 +118,3 @@ plt.xlabel('Amplititude')
 plt.ylabel('Population')
 plt.legend(loc='upper right')
 plt.show()
-
-
-z = 0
-for i in t_list:
-    z = amp*np.exp(-(i-tau)**2/2*(sigma**2))
-    if z > 1.04 and z < 1.06:
-        print('i', i)

@@ -4,18 +4,22 @@ from qutip import *
 from scipy import integrate, special
 
 
+h_ = 1.054  # (h/2pi)
 Nstates = 2  # Hilbert space size, choose N=2 for spin-1/2
 a = destroy(Nstates)
 a_dagger = a.dag()
 sm = sigmaz()
-w_q = 5*2*np.pi  # cavity frequency = 5GHz
-wa = 1.0 * 2 * np.pi  # atom frequency
-g = 0.05 * 2 * np.pi  # coupling strength
-kappa = 0.005          # cavity dissipation rate
-gamma = 0.05           # atom dissipation rate
+Ec = 385*10**-3*np.pi*2
+Ej = 8.9*np.pi*2  # Josephson energy
+r = 0.956*2*np.pi*10**-3  # decoherence rate    #1/T2
+Gamma = 1.686*2*np.pi*10**-3  # relaxation rate   #1/T1
+w_q = np.sqrt(8*Ej*Ec)-Ec  # transition frequency = 4.8GHz
 I_q = qeye(Nstates)  # I
 ground = basis(Nstates, 0)
 excited = basis(Nstates, 1)
+# theroitical k   atom-field coupling constant
+k = 1.6*0.4*np.sqrt(50)/h_*(Ej/2/Ec)**0.25*10000
+
 
 w_q = 5*2*np.pi
 alpha = -300*0.001*2*np.pi
@@ -33,10 +37,11 @@ H_d = [a+a.dag(), square_pulse]
 H = [H_0, H_d]
 ini = ground
 args_test = {}
-t_pulse = 30
+t_pulse = 1.4
+amps = 2.14
 args_test['gate time'] = t_pulse
 args_test['drive frequency'] = w_q
-args_test['amps'] = 0.106
+args_test['amps'] = amps
 
 t_list = np.linspace(-10, 40, 10000)
 plt.plot(t_list, square_pulse(t_list, args_test))
@@ -57,12 +62,21 @@ result1 = expect(state1, result.states)
 # Plot 1
 plt.plot(t_list, result0, label='Ground')
 plt.plot(t_list, result1, label='Excited')
-plt.title('Population Evolution')
+plt.title('Population Evolution (square wave)')
 plt.xlabel('Time')
 plt.ylabel('Population')
 plt.legend(loc='right')
 plt.show()
-
+###############
+t = np.linspace(0, t_pulse, 1000)
+k = 0
+c = 0
+for i in t:
+    c = c + (amps*((1*np.tanh(10000*(i))+1)/2 -
+             (1*np.tanh(10000*(i-t_pulse))+1)/2))**2*t_pulse/1000
+N = c/w_q/h_/10  # 光子數
+print('N=', N)
+print('c = ', c)
 
 # Plot2
 result_population = []  # 紀錄結果的集合
