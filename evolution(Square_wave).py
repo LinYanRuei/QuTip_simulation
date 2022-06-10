@@ -1,3 +1,6 @@
+"""
+@author: Y R Lin @CCU PHY
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 from qutip import *
